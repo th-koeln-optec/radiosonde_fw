@@ -1,7 +1,25 @@
+/// @file comm.c
+/*
+ * Filename:            comm.h
+ * Description:         This file containts the communications stack. Its pourpose is to hold and manage the transmission frames.
+ *                      Its finite state machine handles the transmission cycle of one frame and organizes it in conjunction with
+ *                      the radio ic. It is constructed so that packet of a length greater than the radio ic's fifo size can be handled
+ *                      through frame splitup and fast enough reload of fifo data. The radio needs to provide a possibility to read the
+ *                      remaining free space of the fifo.
+ * Author:              M. Malyska
+ */
+
 #include "comm.h"
 
+/**
+ * Finite state machine's current state memory variable.
+ */
 static enum comm_fifo_tx_fsm_currentState comm_fifo_tx_fsm_currentState;
 
+/**
+ * Main frame buffer. This buffer gets written by all application functions which deliver data to be transmitted.
+ * This buffer is organized as a struct, so that a buffer specific pointer aswell as an start- and end-address are maintained.
+ */
 frame_t comm_frame_txbuffer = 
 {
   .buffer = {
@@ -97,13 +115,15 @@ frame_t comm_frame_txbuffer =
   .start = 0,
   .end = 0,
   .pointer = 0,
-  //.ecc_field_start = 0,
-  //.ecc_field_end = 0,
-  //.ecc_data_start = 0,
-  //.ecc_data_lend = 0,
-  //.rx_ack_pointer = 0
 };
 
+/**
+ * Shadow frame buffer. This buffer is a direct copy of the main frame buffer. Its puropse is to perform various operations
+ * on it without data being change by functions that want to update the frame buffer with new data. Furthermore the splitted
+ * loading of this frame into a smaller radio fifo leads to the necessaty of a write proteced frame so that data changes will be atomic.
+ * The asynchronous and slow data transmission leads to exessive wait time which can be used by functions that write to the frame buffer,
+ * and otherwise would haver wait for a completed transmission.
+ */
 static frame_t frame_txbuffer_shadow = {
   .buffer = {0},
   .start = 0,
@@ -111,6 +131,7 @@ static frame_t frame_txbuffer_shadow = {
   .pointer = 0
 };
 
+//Todo: export to protocoll files!
 #define MASK_LEN 64
 uint8_t mask[MASK_LEN] = { 
   0x96, 0x83, 0x3E, 0x51, 0xB1, 0x49, 0x08, 0x98,
@@ -123,6 +144,9 @@ uint8_t mask[MASK_LEN] = {
   0x78, 0x6E, 0x3B, 0xAE, 0xBF, 0x7B, 0x4C, 0xC1
 };
 
+/**
+ * Init of both frame buffers is performed here.
+ */
 void comm_init(void){
   comm_frame_txbuffer.start = comm_frame_txbuffer.buffer;
   comm_frame_txbuffer.end = (comm_frame_txbuffer.start + sizeof(comm_frame_txbuffer.buffer));
@@ -133,10 +157,21 @@ void comm_init(void){
   frame_txbuffer_shadow.pointer = frame_txbuffer_shadow.start;
 }
 
+/**
+ * Starts transmission of a frame by starting the tx finite state machine.
+ */
 void comm_frame_send(void){
+  //Todo: lock out if currentState != idle
   comm_fifo_tx_fsm_currentState = comm_fifo_tx_fsm_state_start;
 }
 
+/**
+ * This finite state machine controls frame transmission and interaction with the radio ic.
+ * The start state will perform various preparation steps in order to obtain a frame that is filled
+ * with the raw data which is to be transmitted.
+ * The load state is invoked as long as there are still frame parts left to transmit, on completition a change
+ * to idle state is issued. On first calling of the load state the transmission start command is send to the radio.
+ */
 void comm_fifo_tx_fsm(void){
   static uint8_t first_packet = 0x00;
   switch(comm_fifo_tx_fsm_currentState){
@@ -161,8 +196,7 @@ void comm_fifo_tx_fsm(void){
       }
       if(first_packet){
         first_packet = 0x00;
-        radio_tx_start();
-        si446x_request_device_state();
+        comm_hal_tx_start();
       }
       break;
     }
@@ -180,24 +214,31 @@ void comm_fifo_tx_fsm(void){
 /**
  * Provides the logic necessary to maintain a full fifo. Since the radio ic fifo has a capacity smaller than one frame,
  * it will be unavoidable to splitt one frame into multiple packages and fill the fifo acordingly to the currently availabe emtpy space.
- * @return comm_fifo_loader_state Will be comm_fifo_loader_busy if there is still frame left for transmit, if frame is fully transmitted comm_fifo_loader_finished will be returned.
+ * @return Will be comm_fifo_loader_busy if there is still frame left for transmit, if frame is fully transmitted comm_fifo_loader_finished will be returned.
  */
 enum comm_fifo_loader_result comm_fifo_loader(frame_t* frame){
   const uint16_t frame_packet_remaining = frame->end - frame->pointer;
-  const uint8_t fifo_emtpy_space = radio_fifo_get_space();
+  const uint8_t fifo_emtpy_space = comm_hal_fifo_get_space();
 
   if(frame_packet_remaining > fifo_emtpy_space){ //Check if there is enough frame left to completly refill the fifo.
-    radio_fifo_write(frame->pointer, fifo_emtpy_space);
+    comm_hal_fifo_write(frame->pointer, fifo_emtpy_space);
     frame->pointer += fifo_emtpy_space;
     return comm_fifo_loader_busy;
   }
   else{
-    radio_fifo_write(frame->pointer, frame_packet_remaining);
+    comm_hal_fifo_write(frame->pointer, frame_packet_remaining);
     return comm_fifo_loader_finished;
   }
 }
 
+/**
+ * This function will copy the buffer of one frame struct into another frame sturct.
+ * @param source Pointer to the frame struct whose buffer serves as data source.
+ * @param destination Pointer to the frame struct whose buffer will be copyed to.
+ * @return If a buffer size error occurs sys_error_comm will be returned, else sys_error_none will be returned.
+ */
 sys_error_t comm_frame_make_shadowcopy(frame_t* source, frame_t* destination){
+  //Todo: disable all interrupts during execution of this function, in order to make it atomic
   for(source->pointer = source->start, destination->pointer = destination->start;
       source->pointer <= source->end;
       source->pointer++, destination->pointer++){
@@ -205,13 +246,19 @@ sys_error_t comm_frame_make_shadowcopy(frame_t* source, frame_t* destination){
       return sys_error_comm;
     }
     else{
+    //Todo: increment value here with post increment.
       *destination->pointer = *source->pointer;
     }
   }
   return sys_error_none;
 }
 
+/**
+ * This function xor's the frame with a mask of limited length and handles the cyclic wraping from mask end to mask start.
+ * @param frame Pionter to the frame struct whose buffer the xoring will be applied to.
+ */
 void comm_frame_calc_xor(frame_t* frame){
+  //Todo: move the mask definition into the protocol related file, since this is protocol specific
   uint8_t i = 0;
   for(frame->pointer = frame->start; frame->pointer <= frame->end; frame->pointer++, i++){
     if(i >= MASK_LEN){
@@ -221,8 +268,14 @@ void comm_frame_calc_xor(frame_t* frame){
   }
 }
 
-
-
+/**
+ * This function calculates a crc-16 checksum of a data array of given length.
+ * @param data Pointer to an array whose crc sum will be calculated.
+ * @param length Length of data array or on how many bytes will the crc sum be calculated.
+ * @param initial Initial value of the shift register, e.g. 0x0000 or 0xffff are most commonly used.
+ * @param generator Generator polynomial of the crc calculation, but without the leading n+1 one-bit. E.g. for CCITT poly this is 0x1021 and not 0x(1)1021
+ * @return This is the crc calculation result.
+ */
 uint16_t comm_crc16_engine(uint8_t* data, uint16_t length, const uint16_t initial, const uint16_t generator){
   uint16_t crc_buffer = initial;
 
@@ -237,16 +290,6 @@ uint16_t comm_crc16_engine(uint8_t* data, uint16_t length, const uint16_t initia
       }
     }
   }
+  //Todo: split off the crc high byte and then flip both bytes according to vaisala crc byte notation.
   return crc_buffer;
-}
-
-
-
-void test(void){
-  comm_frame_make_shadowcopy(&comm_frame_txbuffer, &frame_txbuffer_shadow);
-  //comm_frame_calc_ecc(frame_txbuffer_shadow.buffer);
-  comm_frame_calc_xor(&frame_txbuffer_shadow);
-  radio_fifo_write(frame_txbuffer_shadow.buffer, 0x38);
-  si446x_start_tx(0x00, 0x00, 0x0140);
-  
 }

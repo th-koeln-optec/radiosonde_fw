@@ -1,20 +1,28 @@
+/// @file main.c
+/*
+ * Filename:            main.c
+ * Description:         This file is the entry point for program execution.
+ * Author:              M. Malyska
+ */
 #include "stm32f1xx.h"
 #include "spi.h"
 #include "rcc.h"
 #include "gpio.h"
 #include "timer.h"
-#include "radio.h"
 #include "comm.h"
 
 uint32_t frame_flag = 0;
 
+/**
+ * After the startup code finishes it will call this function, here is the entry point for user code exeution.
+ */
 void main(void)
 {
   sys_init();
   rcc_init();
   gpio_init();
   spi1_init();
-  radio_init();
+  comm_hal_init();
   comm_init();
   timer_init();
 

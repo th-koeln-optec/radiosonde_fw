@@ -1,9 +1,23 @@
+/// @file rcc.c
+/*
+ * Filename:            rcc.c
+ * Description:         This file containts clock related functions.
+ * Author:              M. Malyska
+ */
+
 #include "rcc.h"
 
+/**
+ * Calls all clock related init functions
+ */
 void rcc_init(void){
   rcc_clk_init();
 }
 
+/**
+ * Initializes the clocking system
+ * @return Returns the error type so that the error handler can be invoked afterwards if necessary.
+ */
 sys_error_t rcc_clk_init(void){
   RCC->CR |= RCC_CR_HSEON_Msk; //Enable/disable ext osc
   while(!(RCC->CR & RCC_CR_HSERDY_Msk)); //Wait for ext osc to start

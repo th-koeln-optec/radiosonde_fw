@@ -2,17 +2,13 @@
 /*
  * Filename:            radio_comm.c
  * Description:         This file contains the RADIO communication layer.
-********************************************************************************
- * CHANGE LOG
- * Version  Author
- * v1.00    SiLabs
- *      Copyright 2011 Silicon Laboratories, Inc.
- * vX.XX    M. Malyska
- *      Changes where implemented by the author, the original file can be found in the same directory: radio_comm.c.bak
+ * Author:              Copyright 2011 Silicon Laboratories, Inc.
+ * Edited by:           M. Malyska; The original file can be found in the same directory: radio_comm.c.bak
  */
+
 #include "radio_comm.h"
 
-/****GLOBAL VARIABLES*/
+/*GLOBAL VARIABLES*/
 uint8_t ctsWentHigh = 0x00;
 
 /**

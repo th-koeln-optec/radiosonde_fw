@@ -2,34 +2,30 @@
 /*
  * Filename:            radio_hal.h
  * Description:         This file contains RADIO HAL.
-********************************************************************************
- * CHANGE LOG
- * Version  Author
- * v1.00    SiLabs
- *      Copyright 2011 Silicon Laboratories, Inc.
- * vX.XX    M. Malyska
- *      Massive changes where implemented by the author, the original file can be found in the same directory: radio_hal.h.bak
+ * Author:              Copyright 2011 Silicon Laboratories, Inc.
+ * Edited by:           M. Malyska; The original file can be found in the same directory: radio_hal.h.bak
  */
+
 #ifndef RADIO_HAL_H
 #define RADIO_HAL_H
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
-/****INCLUDES*/
+/*INCLUDES*/
 #include <stdint.h>
 #include "pin_definitions.h"
 #include "spi.h"
 
-/****GLOBAL VARIABLES*/
+/*GLOBAL VARIABLES*/
 
-/****enumERATORS*/
+/*enumERATORS*/
 
-/****typedefINITIONS*/
+/*typedefINITIONS*/
 
-/****DEFINES*/
+/*DEFINES*/
 
-/****PUBLIC PROTOTYPES*/
+/*PUBLIC PROTOTYPES*/
 void radio_hal_AssertShutdown(void);
 void radio_hal_DeassertShutdown(void);
 void radio_hal_ClearNsel(void);
@@ -62,7 +58,7 @@ uint8_t radio_hal_Gpio3Level(void);
 
 #endif //#ifdef RADIO_DRIVER_EXTENDED_SUPPORT
 
-#ifdef	__cplusplus
+#ifdef __cplusplus
 }
 #endif /* __cplusplus */
 #endif /* RADIO_HAL_H */

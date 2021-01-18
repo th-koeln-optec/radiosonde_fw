@@ -1,14 +1,21 @@
+/// @file pin_definitions.h
+/*
+ * Filename:            pin_definitions.h
+ * Description:         This file containts defines for microntoroller external pins, so that an abstraction from a pin numbering scheme to
+ *                      a meaningful naming is acheived.
+ * Author:              M. Malyska
+ */
+
+//todo: update doxygen explanations of all those defines
 #ifndef PIN_DEFINITIONS_H
 #define PIN_DEFINITIONS_H
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
-/****INCLUDES*/
+/*INCLUDES*/
 #include "stm32f1xx.h"
 #include <stdint.h>
-    
-/****DEFINES*/
 
 /*LED*/
 #define GPIO_LED GPIOC //!< This define returns the port base address for the leds.

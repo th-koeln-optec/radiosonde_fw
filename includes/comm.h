@@ -1,21 +1,29 @@
+/// @file comm.h
+/*
+ * Filename:            comm.h
+ * Description:         This file containts comm.c related function headers.
+ * Author:              M. Malyska
+ */
+
 #ifndef COMM_H
-#define	COMM_H
-#ifdef	__cplusplus
+#define COMM_H
+#ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
 
-/****INCLUDES*/
+/*INCLUDES*/
 #include "stm32f1xx.h"
 #include <stdint.h>
-#include "radio.h"
+#include "comm_hal.h"
 
-/****DEFINES*/
+/*DEFINES*/
+//Todo: move this define in front of the frame
 #define COMM_FRAME_BUFFER_SIZE  (320)
 
 #define COMM_FRAME_REPETITION_RATE
 #define COMM_DATA_RATE
 
-/****typedefINITIONS*/
+/*typedefINITIONS*/
 typedef struct {
   uint8_t* start;
   uint8_t* end;
@@ -23,16 +31,16 @@ typedef struct {
   uint8_t buffer[COMM_FRAME_BUFFER_SIZE];
 }frame_t;
 
-/****GLOBAL VARIABLES*/
+/*GLOBAL VARIABLES*/
 extern frame_t comm_frame_txbuffer;
 
-/****VARIABLES*/
+/*VARIABLES*/
 
-/****enumERATORS*/
+/*enumERATORS*/
 enum comm_fifo_tx_fsm_currentState {comm_fifo_tx_fsm_state_start, comm_fifo_tx_fsm_state_load, comm_fifo_tx_fsm_state_idle};
 enum comm_fifo_loader_result {comm_fifo_loader_busy, comm_fifo_loader_finished};
 
-/****PUBLIC PROTOTYPES*/
+/*PUBLIC PROTOTYPES*/
 void comm_init(void);
 void comm_frame_send(void);
 void comm_fifo_tx_fsm(void);
@@ -40,9 +48,7 @@ enum comm_fifo_loader_result comm_fifo_loader(frame_t* frame);
 sys_error_t comm_frame_make_shadowcopy(frame_t* source, frame_t* destination);
 void comm_frame_calc_xor(frame_t* frame);
 uint16_t comm_crc16_engine(uint8_t* data, uint16_t length, const uint16_t initial, const uint16_t generator);
-
-void test(void);
-#ifdef	__cplusplus
+#ifdef __cplusplus
 }
 #endif /* __cplusplus */
-#endif	/* COMM_H */
+#endif /* COMM_H */

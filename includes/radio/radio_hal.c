@@ -2,20 +2,14 @@
 /*
  * Filename:            radio_hal.c
  * Description:         This file contains RADIO HAL.
-********************************************************************************
- * CHANGE LOG
- * Version  Author
- * v1.00    SiLabs
- *      Copyright 2011 Silicon Laboratories, Inc.
- * vX.XX    M. Malyska
- *      Massive changes where implemented by the author, the original file can be found in the same directory: radio_hal.c.bak
+ * Author:              Copyright 2011 Silicon Laboratories, Inc.
+ * Edited by:           M. Malyska; The original file can be found in the same directory: radio_hal.c.bak
  */
+
 #include "radio_hal.h"
 
 /**
  * Sets the radio-ic shutdown pin to logic high in order to enable shutdown state.
- * @param none
- * @return none
  */
 void radio_hal_AssertShutdown(void){
   GPIO_RADIO_SHDN->BSRR |= GPIO_BSRR_BS_RADIO_SHDN_Msk;
@@ -23,8 +17,6 @@ void radio_hal_AssertShutdown(void){
 
 /**
  * Sets the radio ic shutdown pin to logic low in order to disable shutdown state.
- * @param none
- * @return none
  */
 void radio_hal_DeassertShutdown(void){
   GPIO_RADIO_SHDN->BSRR |= GPIO_BSRR_BR_RADIO_SHDN_Msk;
@@ -32,8 +24,6 @@ void radio_hal_DeassertShutdown(void){
 
 /**
  * Sets the radio-ic chip select pin to logic low in order to enable the radio spi interface.
- * @param none
- * @return none
  */
 void radio_hal_ClearNsel(void){
   GPIO_RADIO_CS->BSRR |= GPIO_BSRR_BR_RADIO_CS_Msk;
@@ -41,8 +31,6 @@ void radio_hal_ClearNsel(void){
 
 /**
  * Sets the radio-ic chip select pin to logic high in order to disable the radio spi interface.
- * @param none
- * @return none
  */
 void radio_hal_SetNsel(void){
   GPIO_RADIO_CS->BSRR |= GPIO_BSRR_BS_RADIO_CS_Msk;
@@ -57,7 +45,6 @@ uint8_t radio_hal_NirqLevel(void)
 /**
  * Transmits one byte of data over spi.
  * @param byte_to_write The one data byte that shall be tranmsmitted.
- * @return none
  */
 void radio_hal_SpiWriteByte(uint8_t byte_to_write){
   spi_trx(byte_to_write);
@@ -65,7 +52,6 @@ void radio_hal_SpiWriteByte(uint8_t byte_to_write){
 
 /**
  * Reads one bit of data over spi.
- * @param none
  * @return Returns the one byte of data that was read.
  */
 uint8_t radio_hal_SpiReadByte(void){
@@ -76,7 +62,6 @@ uint8_t radio_hal_SpiReadByte(void){
  * Transmits one or more byte of data over spi.
  * @param byte_cout The number of bytes that shall be transmitted over spi.
  * @param pData Pointer to an array of bytes that sahll be transmitted.
- * @return none
  */
 void radio_hal_SpiWriteData(uint8_t byte_count, uint8_t* pData){
   for(uint8_t i = 0; i < byte_count; i++){
@@ -88,7 +73,6 @@ void radio_hal_SpiWriteData(uint8_t byte_count, uint8_t* pData){
  * Reads one or more byte of data over spi.
  * @param byte_cout The number of bytes that shall be read over spi.
  * @param pData Pointer to an array of bytes where read data shall be written.
- * @return none
  */
 void radio_hal_SpiReadData(uint8_t byte_count, uint8_t* pData){
   for(uint8_t i = 0; i < byte_count; i++){
@@ -101,7 +85,6 @@ void radio_hal_SpiReadData(uint8_t byte_count, uint8_t* pData){
 #ifdef GPIO_RADIO_GPIO0_USED
 /**
  * Reads radio-ic gpio pin 0.
- * @param none
  * @return Returns the value of the gpio pin.
  */
 uint8_t radio_hal_Gpio0Level(void){
@@ -112,7 +95,6 @@ uint8_t radio_hal_Gpio0Level(void){
 #ifdef GPIO_RADIO_GPIO1_USED
 /**
  * Reads radio-ic gpio pin 1.
- * @param none
  * @return Returns the value of the gpio pin.
  */
 uint8_t radio_hal_Gpio1Level(void){
@@ -123,7 +105,6 @@ uint8_t radio_hal_Gpio1Level(void){
 #ifdef GPIO_RADIO_GPIO2_USED
 /**
  * Reads radio-ic gpio pin 2.
- * @param none
  * @return Returns the value of the gpio pin.
  */
 uint8_t radio_hal_Gpio2Level(void){
@@ -134,7 +115,6 @@ uint8_t radio_hal_Gpio2Level(void){
 #ifdef GPIO_RADIO_GPIO3_USED
 /**
  * Reads radio-ic gpio pin 3.
- * @param none
  * @return Returns the value of the gpio pin.
  */
 uint8_t radio_hal_Gpio3Level(void){

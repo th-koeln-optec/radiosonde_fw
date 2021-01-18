@@ -1,5 +1,15 @@
+/// @file spi.c
+/*
+ * Filename:            spi.c
+ * Description:         This file containts spi related functions.
+ * Author:              M. Malyska
+ */
+
 #include "spi.h"
 
+/**
+ * Initialization of all registers needed for the spi peripheral to function properly.
+ */
 void spi1_init(void){
   RCC->APB2ENR |= RCC_APB2ENR_SPI1EN_Msk; //Enable/disable spi1 peripheral clock
   SPI1->CR1 = 0x0000;                     //Reset the complete sp1 cr register (This is here so I can comment out all bit clear instructions)
@@ -25,9 +35,14 @@ void spi1_init(void){
   SPI1->CR1 |= SPI_CR1_SPE_Msk;           //Enable/disable spi peripheral
 }
 
+/**
+ * Performs an one byte transmit or receive on the spi peripheral.
+ * @param data One byte of data that will be transmitted over spi bus. In case of receive only this byte must be dummy data.
+ * @return One byte of data which was read over spi bus.
+ */
 uint8_t spi_trx(uint8_t data){
   while(!(SPI1->SR & SPI_SR_TXE_Msk));
-  SPI1->DR = data;
+  SPI1->DR = data;  //Write spi buffer every time, even when rx, so that clock cycles will be generated and the spi slave cann shift out data.
   while(!(SPI1->SR & SPI_SR_RXNE_Msk));
-  return SPI1->DR;  //Read rx buffer every time, even when tx, to clear RXNE flag.
+  return SPI1->DR;  //Read spi buffer every time, even when tx, to clear RXNE flag.
 }
