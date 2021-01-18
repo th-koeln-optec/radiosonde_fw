@@ -16,6 +16,7 @@ extern "C" {
 #include <stdint.h>
 #include "comm_hal.h"
 
+
 /*DEFINES*/
 //Todo: move this define in front of the frame
 #define COMM_FRAME_BUFFER_SIZE  (320)
@@ -30,6 +31,18 @@ typedef struct {
   uint8_t* pointer;
   uint8_t buffer[COMM_FRAME_BUFFER_SIZE];
 }frame_t;
+
+typedef struct {
+  uint16_t initial;
+  uint16_t generator;
+  uint8_t byte_swap;
+}crc_t;
+
+typedef struct {
+  uint16_t length;
+  uint8_t* pointer;
+  uint8_t array[];
+}xor_mask_t;
 
 /*GLOBAL VARIABLES*/
 extern frame_t comm_frame_txbuffer;
@@ -46,8 +59,15 @@ void comm_frame_send(void);
 void comm_fifo_tx_fsm(void);
 enum comm_fifo_loader_result comm_fifo_loader(frame_t* frame);
 sys_error_t comm_frame_make_shadowcopy(frame_t* source, frame_t* destination);
-void comm_frame_calc_xor(frame_t* frame);
-uint16_t comm_crc16_engine(uint8_t* data, uint16_t length, const uint16_t initial, const uint16_t generator);
+void comm_frame_calc_xor(frame_t* frame, xor_mask_t* mask);
+uint16_t comm_crc16_engine(uint8_t* data, uint16_t length, const crc_t crc);
+
+/*
+Protocol.h must be included only at this point, since it depends on the xor_mask_t type, which is defined in this header.
+Ok yes, this is somewhat ugly but I did not find a better solution. Typedef must be defined here, but the acutal declaration is
+an inherent property of the protocol itself, so it should be declared there.*/
+#include "protocol.h"
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

@@ -286,7 +286,10 @@ void si446x_set_property( U8 GROUP, U8 NUM_PROPS, U8 START_PROP, ... )
     cmdIndex = 4;
     while(NUM_PROPS--)
     {
+        /*Malyska: stdarg.h will not be able to process this data type and promotes it to int, so int should be chosen beforehand.
         Pro2Cmd[cmdIndex] = va_arg (argList, U8);
+        */
+        Pro2Cmd[cmdIndex] = va_arg (argList, int);
         cmdIndex++;
     }
     va_end(argList);
