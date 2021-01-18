@@ -35,7 +35,6 @@ typedef struct {
 typedef struct {
   uint16_t initial;
   uint16_t generator;
-  uint8_t byte_swap;
 }crc_t;
 
 typedef struct {

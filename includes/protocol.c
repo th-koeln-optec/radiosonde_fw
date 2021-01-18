@@ -22,15 +22,29 @@ xor_mask_t protocol_xor = {
     }
 };
 
-crc_t protocol_crc16_ccitt = {
+crc_t protocol_crc = {
   .initial = 0xffff,
-  .generator = 0x1021,
-  .byte_swap = 0xff
+  .generator = 0x1021
 };
 
-void comm_frame_populator_crc(const field_t field, uint8_t* data, const crc_t crc){
+const field_t status = {
+  .id = 0x79,
+  .offset = 0x0039,
+  .length = 0x28,
+  .crc = 0xff
+};
 
-}
-void comm_frame_populator(const field_t field, uint8_t* data){
-
+void protocol_field_write(const field_t* field, uint8_t* data){
+  uint16_t crc = 0x0000;
+  uint8_t* field_start = (comm_frame_txbuffer.start + field->offset);
+  comm_frame_txbuffer.pointer = field_start;
+  *comm_frame_txbuffer.pointer++ = field->id;
+  *comm_frame_txbuffer.pointer++ = field->length;
+  for(;comm_frame_txbuffer.pointer < (field_start + 2U + field->length);){
+    *comm_frame_txbuffer.pointer++ = *data++;
+  }
+  //todo: add crc disable field->crc
+  crc = comm_crc16_engine(field_start + 2U, field->length, protocol_crc);
+  *comm_frame_txbuffer.pointer++ = crc;
+  *comm_frame_txbuffer.pointer = (crc >> 8);
 }

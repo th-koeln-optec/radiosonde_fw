@@ -22,7 +22,8 @@ static enum comm_fifo_tx_fsm_currentState comm_fifo_tx_fsm_currentState;
  */
 frame_t comm_frame_txbuffer = 
 {
-  .buffer = {
+  .buffer = { 0 
+/*
     0x86, 0x35, 0xf4, 0x40, 0x93, 0xdf, 0x1a, 0x60, // -8 byte header
     0x54, 0x0b, 0x9d, 0x7c, 0x4d, 0x9f, 0xba, 0x6a, //+
     0x46, 0x62, 0x46, 0x6c, 0xe3, 0x60, 0x74, 0x5b, //¦
@@ -69,6 +70,7 @@ frame_t comm_frame_txbuffer =
                       0x76, 0x11, 0x00, 0x00, 0x00, //+
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, //¦- 21 byte payload: 7E-EMPTY
     0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xec, 0xc7  //+
+*/
   },
   .start = 0,
   .end = 0,
@@ -225,8 +227,7 @@ sys_error_t comm_frame_make_shadowcopy(frame_t* source, frame_t* destination){
  * This function calculates a crc-16 checksum of a data array of given length.
  * @param data Pointer to an array whose crc sum will be calculated.
  * @param length Length of data array or on how many bytes will the crc sum be calculated.
- * @param initial Initial value of the shift register, e.g. 0x0000 or 0xffff are most commonly used.
- * @param generator Generator polynomial of the crc calculation, but without the leading n+1 one-bit. E.g. for CCITT poly this is 0x1021 and not 0x(1)1021
+ * @param crc This struct holds all settings needed to define a crc calculation.
  * @return This is the crc calculation result.
  */
 uint16_t comm_crc16_engine(uint8_t* data, uint16_t length, const crc_t crc){
@@ -243,13 +244,5 @@ uint16_t comm_crc16_engine(uint8_t* data, uint16_t length, const crc_t crc){
       }
     }
   }
-
-  if(crc.byte_swap){
-    uint8_t highbyte = crc_buffer >> 8;
-    crc_buffer = (crc_buffer << 8) | highbyte;
-  }
-
   return crc_buffer;
 }
-
-//TEST crc engine esp. byte swap

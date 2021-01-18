@@ -28,6 +28,7 @@ extern "C" {
 
 /*typedefINITIONS*/
 typedef struct {
+  uint8_t id;
   uint16_t offset;
   uint8_t length;
   uint8_t crc;
@@ -35,13 +36,15 @@ typedef struct {
 
 /*GLOBAL VARIABLES*/
 extern xor_mask_t protocol_xor;
-extern crc_t protocol_crc16_ccitt;
+extern crc_t protocol_crc;
+extern const field_t status;
 
 /*VARIABLES*/
 
 /*enumERATORS*/
 
 /*PUBLIC PROTOTYPES*/
+void protocol_field_write(const field_t* field, uint8_t* data);
 
 #ifdef __cplusplus
 }
