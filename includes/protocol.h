@@ -32,18 +32,34 @@ typedef struct {
   uint16_t offset;
   uint8_t length;
   uint8_t crc;
+  uint8_t head;
 }field_t;
 
 /*GLOBAL VARIABLES*/
 extern xor_mask_t protocol_xor;
 extern crc_t protocol_crc;
-extern const field_t status;
+
+extern const uint8_t protocol_header[];
+extern const uint8_t protocol_frametype_regular[];
+extern const uint8_t protocol_frametype_extended[];
+
+extern const field_t protocol_f_header;
+extern const field_t protocol_f_ecc;
+extern const field_t protocol_f_frametype;
+extern const field_t protocol_f_status;
+extern const field_t protocol_f_meas;
+extern const field_t protocol_f_gpsinfo;
+extern const field_t protocol_f_gpsraw;
+extern const field_t protocol_f_gpspos;
+extern const field_t protocol_f_empty;
+
 
 /*VARIABLES*/
 
 /*enumERATORS*/
 
 /*PUBLIC PROTOTYPES*/
+void protocol_init(void);
 void protocol_field_write(const field_t* field, uint8_t* data);
 
 #ifdef __cplusplus
