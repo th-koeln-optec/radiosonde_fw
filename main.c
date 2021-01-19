@@ -79,6 +79,8 @@ void main(void)
   };
   protocol_field_write(&protocol_f_empty, empty_data);
 
+  comm_hal_frequency_set(0x5e);
+
   while(1){
     if(tick_flag){
       tick_flag = 0x00;

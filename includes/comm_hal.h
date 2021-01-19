@@ -30,17 +30,18 @@ extern "C" {
 /*DEFINES*/
 #define RADIO_IC_TYPE 0x4464
 
+#define RADIO_FREQUENCY_LIMIT_UPPER 0x78
+
 //Todo: implement data rate switching functions
 #define RADIO_DATA_RATE 4800
-
-#define RADIO_FIFO_SIZE 0x3b //!< Si4x3x FIFO is 64 byte long minus 5 byte ae
-#define RADIO_FIFO_ALMOST_EMPTY_Msk 0x01
 
 /*PUBLIC PROTOTYPES*/
 void comm_hal_init(void);
 void comm_hal_tx_start(void);
 uint8_t comm_hal_fifo_get_space(void);
 void comm_hal_fifo_write(uint8_t* buffer, uint8_t buffer_length);
+void comm_hal_datarate_set(uint16_t datarate);
+void comm_hal_frequency_set(uint8_t frequency);
 
 #ifdef __cplusplus
 }

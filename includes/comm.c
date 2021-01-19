@@ -130,7 +130,7 @@ void comm_fifo_tx_fsm(void){
         comm_frame_calc_ecc(&frame_txbuffer_shadow);
       #endif
       #ifdef PROTOCOL_XOR_ENABLE
-        comm_frame_calc_xor(&frame_txbuffer_shadow, &protocol_xor);
+        comm_frame_xor_engine(&frame_txbuffer_shadow, &protocol_xor);
       #endif
       first_packet = 0xff;
       frame_txbuffer_shadow.pointer = frame_txbuffer_shadow.start; //Reset frame position pointer so that fifo loader will begin at start.
@@ -210,7 +210,7 @@ sys_error_t comm_frame_make_shadowcopy(frame_t* source, frame_t* destination){
  * @param mask Pointer to the mask struct whose array is the xoring mask.
  */
  #ifdef PROTOCOL_XOR_ENABLE
-  void comm_frame_calc_xor(frame_t* frame, xor_mask_t* mask){
+  void comm_frame_xor_engine(frame_t* frame, xor_mask_t* mask){
     for(frame->pointer = frame->start, mask->pointer = mask->array;
         frame->pointer <= frame->end;
         frame->pointer++, mask->pointer++){

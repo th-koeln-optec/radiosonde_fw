@@ -1,12 +1,19 @@
 /// @file protocol.c
 /*
  * Filename:            protocol.c
- * Description:         TBD
+ * Description:         This file contains the protocol implementation of the VAISALA RS41 PROTOCOL. All protocol specific stettings and data
+ *                      will be specified here. It handles the insertion into the transmission frame with the protocol inherent fields based on the
+ *                      data it gets.
  * Author:              M. Malyska
  */
 
 #include "protocol.h"
 
+/**
+ * This is the xor mask used for data whitening of the frame. It is xored with the frame itself, when the frame length is greater than 
+ * the mask length the xoring engine will handle a cyclic wrap around, thefore the 'length' of the mask must be passed to the xoring engine.
+ * The 'pointer' is used by the xoring engine to keep track at which point it currently is during the xoring cycle.
+ */
 xor_mask_t protocol_xor = {
   .length = 0x40,
   .pointer = 0x00,
@@ -22,15 +29,35 @@ xor_mask_t protocol_xor = {
     }
 };
 
+/**
+ * This is the header that is inherent to the vaisala protocol, it is constant and does not change.
+ * Its length must correspond with the length statet in the field definition.
+ */
 const uint8_t protocol_header[8] = {0x86, 0x35, 0xf4, 0x40, 0x93, 0xdf, 0x1a, 0x60};
+
+/**
+ * This byte specifies the frametype send, it is inherent to the vaisala protocol.
+ * When sending a regualr frame this byte musst be used.
+ */
 const uint8_t protocol_frametype_regular[1] = {0x0f};
+/**
+ * This byte specifies the frametype send, it is inherent to the vaisala protocol.
+ * When sending a extended frame this byte musst be used.
+ */
 const uint8_t protocol_frametype_extended[1] = {0xf0};
 
+/**
+ * This sturct defines the crc properties used by the vailsa protocol.
+ * In order to get the correct crc check sum by the vaisla definiton the crc shift register
+ * must be prefilled with 0xffff and the CRC16-CCITT generator polynomial 0x1021 must be used.
+ * For further information look into the comm_crc_engine function.
+ */
 crc_t protocol_crc = {
   .initial = 0xffff,
   .generator = 0x1021
 };
 
+/*FIELD DEFINTIONS*/
 const field_t protocol_f_header = {
   .id = 0x00,
   .offset = 0x0000,
@@ -95,19 +122,54 @@ const field_t protocol_f_gpspos = {
   .head = 0xff
 };
 
-const field_t protocol_f_empty = {
-  .id = 0x76,
-  .offset = 0x012b,
-  .length = 0x11,
-  .crc = 0xff,
-  .head = 0xff
-};
+#ifdef PROTOCOL_XDATA
+  field_t protocol_f_xdata = {
+    .id = 0x7e,
+    .offset = 0x012b,
+    .length = 0x15,
+    .crc = 0xff,
+    .head = 0xff
+  };
 
+  field_t protocol_f_empty = {
+    .id = 0x76,
+    .offset = 0x0144,
+    .length = 0xbe,
+    .crc = 0xff,
+    .head = 0xff
+  };
+#else
+  const field_t protocol_f_empty = {
+    .id = 0x76,
+    .offset = 0x012b,
+    .length = 0x11,
+    .crc = 0xff,
+    .head = 0xff
+  };
+#endif
+/*FIELD DEFINITIONS END*/
+
+/**
+ * All preparations that need to be taken before unsing the porotocol functions are stated here.
+ */
 void protocol_init(void){
   protocol_field_write(&protocol_f_header, protocol_header);
-  protocol_field_write(&protocol_f_frametype, protocol_frametype_regular);
+  #ifdef PROTOCOL_CDATA
+    protocol_field_write(&protocol_f_frametype, protocol_frametype_extended);
+  #else
+    protocol_field_write(&protocol_f_frametype, protocol_frametype_regular);
+  #endif
 }
 
+/**
+ * This function writes a field as defined by the vaisala protocol into the comm_frame_txbuffer.
+ * It prefixes the raw field data with the field id an the data length if field->head is 0xff.
+ * It suffices the raw field data with the crc checksum over the raw data if field->crc is 0xff.
+ * field->offset holds the position offset of the field, counted from the beginning of the frame.
+ * field->length holds the amount of raw data bytes without head and crc checksum
+ * @param field Pointer to the field struct which should be written to.
+ * @param data Pointer to an array of payload data.
+ */
 void protocol_field_write(const field_t* field, uint8_t* data){
   uint16_t crc = 0x0000;
   uint8_t* field_start = (comm_frame_txbuffer.start + field->offset);

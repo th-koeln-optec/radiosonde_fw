@@ -11,6 +11,13 @@
 extern "C" {
 #endif /* __cplusplus */
 
+//#define PROTOCOL_XDATA
+#ifdef PROTOCOL_XDATA
+#define COMM_FRAME_BUFFER_SIZE 518
+#else
+#define COMM_FRAME_BUFFER_SIZE 320
+#endif
+
 /*INCLUDES*/
 #include "stm32f1xx.h"
 #include <stdint.h>
@@ -18,6 +25,8 @@ extern "C" {
 
 /*DEFINES*/
 #define PROTOCOL_TYPE VAISALA
+
+
 
 #define PROTOCOL_XOR_ENABLE
 //#define PROTOCOL_ECC_ENABLE
@@ -27,6 +36,14 @@ extern "C" {
 #define PROTOCOL_CRC_BYTESWAP 0xff //0xff if crc low-byte and crc-highbyte should be swaped, 0x00 if not
 
 /*typedefINITIONS*/
+/**
+ * This struct holds the definitions of all the diffrent fields of a frame.
+ * id is a field identifier, if head is enabled this will be writen in the first byte of a field
+ * offset is a the position of the field inside the frame, it states the position of the first field byte
+ * length is the amount of pure data bytes, without the two head bytes and without the two crc bytes
+ * crc enables/disables the generation and the suffixing of the crc sum
+ * head enables/disables the prefixing of the id field and the length field
+ */
 typedef struct {
   uint8_t id;
   uint16_t offset;
