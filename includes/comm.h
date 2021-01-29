@@ -15,13 +15,19 @@ extern "C" {
 #include "stm32f1xx.h"
 #include <stdint.h>
 #include "comm_hal.h"
-
+#include "sys.h"
 
 /*DEFINES*/
-#define COMM_FRAME_REPETITION_RATE
-#define COMM_DATA_RATE
+#define COMM_FRAME_BUFFER_SIZE 320
 
 /*typedefINITIONS*/
+typedef struct {
+  uint8_t* start;
+  uint8_t* end;
+  uint8_t* pointer;
+  uint8_t buffer[COMM_FRAME_BUFFER_SIZE];
+}frame_t;
+
 typedef struct {
   uint16_t initial;
   uint16_t generator;
@@ -33,21 +39,7 @@ typedef struct {
   uint8_t array[];
 }xor_mask_t;
 
-/*
-Protocol.h must be included only at this point, since it depends on the xor_mask_t type, which is defined in this header.
-Ok yes, this is somewhat ugly but I did not find a better solution. Typedef must be defined here, but the acutal declaration is
-an inherent property of the protocol itself, so it should be declared there.*/
-#include "protocol.h"
-
-typedef struct {
-  uint8_t* start;
-  uint8_t* end;
-  uint8_t* pointer;
-  uint8_t buffer[COMM_FRAME_BUFFER_SIZE];
-}frame_t;
-
 /*GLOBAL VARIABLES*/
-extern frame_t comm_frame_txbuffer;
 
 /*VARIABLES*/
 
@@ -57,12 +49,12 @@ enum comm_fifo_loader_result {comm_fifo_loader_busy, comm_fifo_loader_finished};
 
 /*PUBLIC PROTOTYPES*/
 void comm_init(void);
-void comm_frame_send(void);
+sys_error_t comm_frame_send(frame_t* frame);
 void comm_fifo_tx_fsm(void);
-enum comm_fifo_loader_result comm_fifo_loader(frame_t* frame);
+static enum comm_fifo_loader_result comm_fifo_loader(frame_t* frame);
 sys_error_t comm_frame_make_shadowcopy(frame_t* source, frame_t* destination);
-void comm_frame_xor_engine(frame_t* frame, xor_mask_t* mask);
 uint16_t comm_crc16_engine(uint8_t* data, uint16_t length, const crc_t crc);
+void comm_xor_engine(frame_t* frame, xor_mask_t* mask);
 
 #ifdef __cplusplus
 }

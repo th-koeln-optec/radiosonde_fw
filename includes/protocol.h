@@ -11,13 +11,6 @@
 extern "C" {
 #endif /* __cplusplus */
 
-//#define PROTOCOL_XDATA
-#ifdef PROTOCOL_XDATA
-#define COMM_FRAME_BUFFER_SIZE 518
-#else
-#define COMM_FRAME_BUFFER_SIZE 320
-#endif
-
 /*INCLUDES*/
 #include "stm32f1xx.h"
 #include <stdint.h>
@@ -26,14 +19,8 @@ extern "C" {
 /*DEFINES*/
 #define PROTOCOL_TYPE VAISALA
 
-
-
 #define PROTOCOL_XOR_ENABLE
-//#define PROTOCOL_ECC_ENABLE
-
-#define PROTOCOL_CRC_INITIAL 0xffff
-#define PROTOCOL_CRC_GENERATOR 0x1021 //CRC16-CCITT Generator polynomial
-#define PROTOCOL_CRC_BYTESWAP 0xff //0xff if crc low-byte and crc-highbyte should be swaped, 0x00 if not
+#define PROTOCOL_ECC_ENABLE
 
 /*typedefINITIONS*/
 /**
@@ -53,10 +40,6 @@ typedef struct {
 }field_t;
 
 /*GLOBAL VARIABLES*/
-extern xor_mask_t protocol_xor;
-extern crc_t protocol_crc;
-
-extern const uint8_t protocol_header[];
 extern const uint8_t protocol_frametype_regular[];
 extern const uint8_t protocol_frametype_extended[];
 
@@ -70,14 +53,15 @@ extern const field_t protocol_f_gpsraw;
 extern const field_t protocol_f_gpspos;
 extern const field_t protocol_f_empty;
 
-
 /*VARIABLES*/
 
 /*enumERATORS*/
 
 /*PUBLIC PROTOTYPES*/
 void protocol_init(void);
-void protocol_field_write(const field_t* field, uint8_t* data);
+void protocol_frame_send(void);
+void protocol_field_write(const field_t* field, const uint8_t* data);
+//void protocol_ecc(RS_t* rs,frame_t* frame);
 
 #ifdef __cplusplus
 }

@@ -9,9 +9,11 @@
 #include "rcc.h"
 #include "gpio.h"
 #include "timer.h"
-#include "comm.h"
+#include "protocol.h"
+//#include "rs.h"
 
 uint32_t frame_flag = 0;
+void fill_data(void);
 
 /**
  * After the startup code finishes it will call this function, here is the entry point for user code exeution.
@@ -22,11 +24,41 @@ void main(void)
   rcc_init();
   gpio_init();
   spi1_init();
-  comm_hal_init();
-  comm_init();
   timer_init();
   protocol_init();
 
+  fill_data();
+  comm_hal_frequency_set(0x5e);
+
+  //rs_init_RS255(&RS256);
+
+  /*
+  uint8_t source[256] = {
+    0x0b, 0x0a, 0x09, 0x08, 0x07, 0x06, 0x05, 0x04, 
+    0x03, 0x02, 0x01
+  };
+  uint8_t parity[24] = {0};
+  rs_encode(&RS256, source, parity);
+
+  asm ("nop");
+*/
+
+  while(1){
+    if(tick_flag){
+      tick_flag = 0x00;
+      comm_fifo_tx_fsm();
+      if(frame_flag == 0){
+        protocol_frame_send();
+        frame_flag = 1000;
+      }
+      else{
+        frame_flag--;
+      }
+    }
+  }
+}
+
+void fill_data(void){
   uint8_t status_data[40] = {
     0x03, 0x1e, 0x50, 0x32, 0x37, 0x34, 0x30, 0x33,
     0x38, 0x37, 0x1a, 0x00, 0x00, 0x03, 0x00, 0x00,
@@ -78,21 +110,4 @@ void main(void)
     0x00
   };
   protocol_field_write(&protocol_f_empty, empty_data);
-
-  comm_hal_frequency_set(0x5e);
-
-  while(1){
-    if(tick_flag){
-      tick_flag = 0x00;
-      comm_fifo_tx_fsm();
-      if(frame_flag == 0){
-        comm_frame_send();
-        frame_flag = 1000;
-      }
-      else{
-        frame_flag--;
-      }
-    }
-  }
 }
-
