@@ -195,7 +195,7 @@ static int8_t poly_multiply(GF_t *gf, uint8_t a[], uint8_t b[], uint8_t *ab){
 }
 
 /**
- * 
+ * Todo
  * @param gf Points to a gt_t struct which holds all necessary parameters that characterize galois fields.
  * @param p Address of an array that holds dividend p's galois field polynomial.
  * @param q Address of an array that holds divisor q's galois field polynomial.
@@ -275,7 +275,7 @@ static int poly_divide(GF_t *gf, uint8_t p[], uint8_t q[], uint8_t *d, uint8_t *
 }
 
 /**
- * 
+ * This functions initialized both look up tables (LUT). Then it will generate the generator polynomial.
  * @param rs Points to a rs_t struct which holds all the necessary parameters that characterize the reed-solomon properties.
  * @param gf Points to a gt_t struct which holds all the necessary parameters that characterize the galois fields used.
  * @return Returns 0 if gf_lut_init sucessfully initialized, if an error occured -1 will be returned.
@@ -287,10 +287,6 @@ int8_t rs_init(RS_t* rs, GF_t* gf){
     rs->gf = gf;
 
     lut_success = gf_lut_init(gf);
-
-    //for (uint16_t i = 0; i <= MAX_DEG; i++){
-    //  rs->g[i] = 0;
-    //}
 
     //g(X)=(X-alpha^b)...(X-alpha^(b+2t-1)), b=0
     rs->g[0] = 0x01;
@@ -304,26 +300,25 @@ int8_t rs_init(RS_t* rs, GF_t* gf){
 }
 
 /**
- * 
+ * This function performs the reed solomon encoding.
+ * @param rs Points to a rs_t struct which holds all the necessary parameters that characterize the reed-solomon properties.
+ * @param source Pointer to a 'rs->K' long array which holds the source data that is to be encoded, the first 'rs->R' array elements must be emtpy space.
+ * @param destination Pointer to an 'rs->r' long array that holds emtpy space for parity data to be written to.
  */
-int rs_encode(RS_t *RS, uint8_t cw[], uint8_t dest[]){
-    GF_t *gf = RS->gf;
-    //int j;
-    uint8_t _cw[MAX_DEG+1] = {0};
-    uint8_t parity[MAX_DEG+1] = {0};
-    uint8_t d[MAX_DEG+1];
-    //for (j = 0; j <= MAX_DEG; j++) parity[j] = 0;
-    //for (j = 0; j <= MAX_DEG; j++) __cw[j] = 0;
-    //for (uint16_t j = RS->R; j < RS->N; j++) _cw[j] = cw[j];
-    for(uint16_t j = RS->R; j < RS->N; j++){
-      _cw[j] = cw[j];
-    }
-    poly_divide(gf, _cw, RS->g, d, parity);
-    //if (poly_deg(parity) >= RS.R) return -1;
-    //for (j = 0; j < RS->R; j++) cw[j] = parity[j];
-    for (uint16_t j = 0; j < RS->R; j++){
-      dest[j] = parity[j];
-    }
+void rs_encode(RS_t* rs, uint8_t source[], uint8_t destination[]){
+    GF_t *gf = rs->gf;
 
-    return 0;
+    //uint8_t _source[MAX_DEG+1] = {0};
+    uint8_t parity[MAX_DEG+1] = {0};
+    uint8_t quotient[MAX_DEG+1] = {0};
+
+    //for(uint16_t j = RS->R; j < RS->N; j++){
+    //  _source[j] = source[j];
+    //}
+    //message(x)/generator(x)=quotient(x)+remainder(x) <=> _source[]/rs->g[]=quotient[]+parity[]
+    poly_divide(gf, source, RS->g, quotient, parity);
+
+    for (uint16_t j = 0; j < RS->R; j++){
+      destination[j] = parity[j];
+    }
 }

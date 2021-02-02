@@ -54,7 +54,7 @@ static uint8_t gf_inverse(GF_t *gf, uint8_t p);
 static int8_t poly_multiply(GF_t *gf, uint8_t a[], uint8_t b[], uint8_t *ab);
 static int poly_divide(GF_t *gf, uint8_t p[], uint8_t q[], uint8_t *d, uint8_t *r);
 int8_t rs_init(RS_t* rs, GF_t* gf);
-int rs_encode(RS_t *RS, uint8_t cw[], uint8_t dest[]);
+void rs_encode(RS_t* rs, uint8_t cw[], uint8_t dest[]);
 
 #ifdef __cplusplus
 }

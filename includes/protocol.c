@@ -331,14 +331,14 @@ void protocol_ecc_engine(RS_t* rs,frame_t* frame){
   uint16_t offset = 0;
   for(uint16_t j = 0; j <= 1; j++){
     for(uint16_t i = 0; i < rs->K; i++){
-      if(&frame->buffer[protocol_f_frametype.offset + 2*i + j] < frame->end){
+      if(&frame->buffer[protocol_f_frametype.offset + 2*i + j] < frame->end){ //Prevent pointer overflow, check if frame end is reached.
         message[i + rs->R] = frame->buffer[protocol_f_frametype.offset + 2*i + j];
       }
       else{
-        message[i + rs->R] = 0;
+        message[i + rs->R] = 0; //Perform zero padding on remaining array space.
       }
     }
-    offset = j ? (protocol_f_ecc.offset + rs->R) : protocol_f_ecc.offset;
+    offset = j ? (protocol_f_ecc.offset + rs->R) : protocol_f_ecc.offset; //Shift parity data write destination by parity data size, for the second run.
     rs_encode(rs, message, &frame->buffer[offset]);
   }
 }
