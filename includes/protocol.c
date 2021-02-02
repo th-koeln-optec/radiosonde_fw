@@ -104,6 +104,37 @@ static xor_mask_t protocol_xor = {
 };
 
 /**
+ * This sturct defines the crc properties used by the vailsa protocol.
+ * In order to get the correct crc check sum by the vaisla definiton the crc shift register
+ * must be prefilled with 0xffff and the CRC16-CCITT generator polynomial 0x1021 must be used.
+ * For further information look into the comm_crc_engine function.
+ */
+const crc_t protocol_crc = {
+  .initial = 0xffff,
+  .generator = 0x1021
+};
+
+GF_t GF256RS = { 
+  .prime = 0x11D, // RS-GF(2^8): X^8 + X^4 + X^3 + X^2 + 1 : 0x11D
+  .order = 256, // 2^8
+  .alpha = 0x02, // generator: alpha = X
+  .exp_a = {0},
+  .log_a = {0}
+};
+
+RS_t RS256 = {
+  .N = 255,
+  .t = 12,
+  .R = 24,
+  .K = 231,
+  .b = 0,
+  .p = 1,
+  .ip = 1,
+  .g = {0},
+  .gf = 0
+};
+
+/**
  * This is the header that is inherent to the vaisala protocol, it is constant and does not change.
  * Its length must correspond with the length statet in the field definition.
  */
@@ -119,17 +150,6 @@ const uint8_t protocol_frametype_regular[1] = {0x0f};
  * When sending an extended frame this byte musst be used.
  */
 const uint8_t protocol_frametype_extended[1] = {0xf0};
-
-/**
- * This sturct defines the crc properties used by the vailsa protocol.
- * In order to get the correct crc check sum by the vaisla definiton the crc shift register
- * must be prefilled with 0xffff and the CRC16-CCITT generator polynomial 0x1021 must be used.
- * For further information look into the comm_crc_engine function.
- */
-const crc_t protocol_crc = {
-  .initial = 0xffff,
-  .generator = 0x1021
-};
 
 /*FIELD DEFINTIONS*/
 const field_t protocol_f_header = {
@@ -228,6 +248,7 @@ const field_t protocol_f_gpspos = {
  */
 void protocol_init(void){
   comm_init();
+  rs_init(&RS256, &GF256RS);
 
   protocol_frame_txbuffer.start = protocol_frame_txbuffer.buffer;
   protocol_frame_txbuffer.end = (protocol_frame_txbuffer.start + sizeof(protocol_frame_txbuffer.buffer));
@@ -254,7 +275,7 @@ void protocol_frame_send(void){
   comm_frame_make_shadowcopy(&protocol_frame_txbuffer, &frame_txbuffer_shadow);
 
   #ifdef PROTOCOL_ECC_ENABLE
-    //protocol_ecc_engine(&frame_txbuffer_shadow);
+    protocol_ecc_engine(&RS256, &frame_txbuffer_shadow);
   #endif
   #ifdef PROTOCOL_XOR_ENABLE
     comm_xor_engine(&frame_txbuffer_shadow, &protocol_xor);
@@ -294,11 +315,30 @@ void protocol_field_write(const field_t* field, const uint8_t* data){
   }
 }
 
-/*
+/**
+ * This function prepares a data array which is fed to the rs_encode funtion. This is necessary because the vaisala protocol uses a special data order.
+ * RS(255,231) is used to generate 24 byte of parity data, but for a complete frame 48 byte of parity data have to be generated. This is acheived by
+ * performing two runs, the first one starts at array offset 'protocol_f_frametype.offset' and from there on it will take every even byte-offset and
+ * write it into message. If frame end is encounterd from there on zero will be written into message (zero padding). The generated parity data is
+ * wirtten at array offset 'protocol_f_ecc.offset'. The second run is started at offset 'protocol_f_frametype.offset + 1' and from there on it will
+ * take every odd byte-offset and write it into message. Zero padding is performed here aswell. The generated parity data is written at array
+ * offset 'protocol_f_ecc.offset' plus the size of one parity data set.
+ * @param rs Points to a rs_t struct which holds all the necessary parameters that characterize the reed-solomon properties.
+ * @param frame Points to a frame struct whose data is source to rs calculation and whose buffer partity data gets written to.
+ */
 void protocol_ecc_engine(RS_t* rs,frame_t* frame){
-  uint8_t message[MAX_DEG+1] = {0};
-  for(uint16_t i = 0; i < rs->K; i++){
-    message[i + rs->R] = frame->buffer[protocol_f_frametype.offset + 2*i];
+  uint8_t message[RS_ORDER - 1] = {0};
+  uint16_t offset = 0;
+  for(uint16_t j = 0; j <= 1; j++){
+    for(uint16_t i = 0; i < rs->K; i++){
+      if(&frame->buffer[protocol_f_frametype.offset + 2*i + j] < frame->end){
+        message[i + rs->R] = frame->buffer[protocol_f_frametype.offset + 2*i + j];
+      }
+      else{
+        message[i + rs->R] = 0;
+      }
+    }
+    offset = j ? (protocol_f_ecc.offset + rs->R) : protocol_f_ecc.offset;
+    rs_encode(rs, message, &frame->buffer[offset]);
   }
-  rs_encode(rs, message, &frame->buffer[protocol_f_ecc.offset]);
-}*/
+}

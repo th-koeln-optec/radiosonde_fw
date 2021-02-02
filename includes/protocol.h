@@ -15,6 +15,7 @@ extern "C" {
 #include "stm32f1xx.h"
 #include <stdint.h>
 #include "comm.h"
+#include "rs.h"
 
 /*DEFINES*/
 #define PROTOCOL_TYPE VAISALA
@@ -61,7 +62,7 @@ extern const field_t protocol_f_empty;
 void protocol_init(void);
 void protocol_frame_send(void);
 void protocol_field_write(const field_t* field, const uint8_t* data);
-//void protocol_ecc(RS_t* rs,frame_t* frame);
+void protocol_ecc_engine(RS_t* rs,frame_t* frame);
 
 #ifdef __cplusplus
 }

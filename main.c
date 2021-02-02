@@ -10,7 +10,6 @@
 #include "gpio.h"
 #include "timer.h"
 #include "protocol.h"
-//#include "rs.h"
 
 uint32_t frame_flag = 0;
 void fill_data(void);
@@ -29,19 +28,6 @@ void main(void)
 
   fill_data();
   comm_hal_frequency_set(0x5e);
-
-  //rs_init_RS255(&RS256);
-
-  /*
-  uint8_t source[256] = {
-    0x0b, 0x0a, 0x09, 0x08, 0x07, 0x06, 0x05, 0x04, 
-    0x03, 0x02, 0x01
-  };
-  uint8_t parity[24] = {0};
-  rs_encode(&RS256, source, parity);
-
-  asm ("nop");
-*/
 
   while(1){
     if(tick_flag){
