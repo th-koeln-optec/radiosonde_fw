@@ -316,9 +316,9 @@ void rs_encode(RS_t* rs, uint8_t source[], uint8_t destination[]){
     //  _source[j] = source[j];
     //}
     //message(x)/generator(x)=quotient(x)+remainder(x) <=> _source[]/rs->g[]=quotient[]+parity[]
-    poly_divide(gf, source, RS->g, quotient, parity);
+    poly_divide(gf, source, rs->g, quotient, parity);
 
-    for (uint16_t j = 0; j < RS->R; j++){
+    for (uint16_t j = 0; j < rs->R; j++){
       destination[j] = parity[j];
     }
 }
