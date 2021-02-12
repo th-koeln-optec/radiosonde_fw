@@ -52,6 +52,7 @@ void comm_init(void);
 sys_error_t comm_frame_send(frame_t* frame);
 void comm_fifo_tx_fsm(void);
 static enum comm_fifo_loader_result comm_fifo_loader(frame_t* frame);
+void comm_frame_init(frame_t* frame);
 sys_error_t comm_frame_make_shadowcopy(frame_t* source, frame_t* destination);
 uint16_t comm_crc16_engine(uint8_t* data, uint16_t length, const crc_t crc);
 void comm_xor_engine(frame_t* frame, xor_mask_t* mask);

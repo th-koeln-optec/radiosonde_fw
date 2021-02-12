@@ -39,10 +39,7 @@ static frame_t frame_txbuffer_shadow = {
  */
 void comm_init(void){
   comm_hal_init();
-  frame_txbuffer_shadow.start = frame_txbuffer_shadow.buffer;
-  frame_txbuffer_shadow.end = (frame_txbuffer_shadow.start + sizeof(frame_txbuffer_shadow.buffer));
-  frame_txbuffer_shadow.pointer = frame_txbuffer_shadow.start;
-
+  comm_frame_init(&frame_txbuffer_shadow);
   comm_fifo_tx_fsm_currentState = comm_fifo_tx_fsm_state_idle;
 }
 
@@ -128,6 +125,18 @@ static enum comm_fifo_loader_result comm_fifo_loader(frame_t* frame){
   }
 }
 
+  /**
+   * This function will initialize a frame_t struct, it sets the start pointer according to the position
+   * of the buffer array in memory. The end pointer will be initialized according to array length.
+   * @param frame This is a pointer to the frame_t struct which is to be initialized.
+   */
+  void comm_frame_init(frame_t* frame){
+    frame->start = frame->buffer;
+    //(frame->end = (frame->start + (sizeof(frame->buffer)-1));
+    frame->end = (frame->start + sizeof(frame->buffer));
+    frame->pointer = frame->start;
+  }
+
 /**
  * This function will copy the buffer of one frame struct into another frame sturct.
  * @param source Pointer to the frame struct whose buffer serves as data source.
@@ -137,7 +146,7 @@ static enum comm_fifo_loader_result comm_fifo_loader(frame_t* frame){
 sys_error_t comm_frame_make_shadowcopy(frame_t* source, frame_t* destination){
   //Todo: disable all interrupts during execution of this function, in order to make it atomic
   for(source->pointer = source->start, destination->pointer = destination->start;
-      source->pointer <= source->end;
+      source->pointer < source->end;
       source->pointer++, destination->pointer++){
     if(destination->pointer > destination->end){ //Check if destination buffer is too small.
       return sys_error_comm;

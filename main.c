@@ -28,7 +28,7 @@ void main(void)
 
   fill_data();
   comm_hal_frequency_set(0x5e);
-  comm_hal_datarate_set(4900U);
+  comm_hal_datarate_set(4800U);
 
   while(1){
     if(tick_flag){

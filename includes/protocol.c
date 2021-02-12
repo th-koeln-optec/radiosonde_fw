@@ -250,12 +250,8 @@ void protocol_init(void){
   comm_init();
   rs_init(&RS256, &GF256RS);
 
-  protocol_frame_txbuffer.start = protocol_frame_txbuffer.buffer;
-  protocol_frame_txbuffer.end = (protocol_frame_txbuffer.start + sizeof(protocol_frame_txbuffer.buffer));
-  protocol_frame_txbuffer.pointer = protocol_frame_txbuffer.start;
-  frame_txbuffer_shadow.start = frame_txbuffer_shadow.buffer;
-  frame_txbuffer_shadow.end = (frame_txbuffer_shadow.start + sizeof(frame_txbuffer_shadow.buffer));
-  frame_txbuffer_shadow.pointer = frame_txbuffer_shadow.start;
+  comm_frame_init(&protocol_frame_txbuffer);
+  comm_frame_init(&frame_txbuffer_shadow);
 
   protocol_field_write(&protocol_f_header, protocol_header);
   #ifdef PROTOCOL_XDATA
