@@ -11,15 +11,12 @@
 
 #include "comm.h"
 
+static uint8_t first_packet = 0x00;
+
 /**
  * Finite state machine's current state memory variable.
  */
 static enum comm_fifo_tx_fsm_currentState comm_fifo_tx_fsm_currentState;
-
-/**
- * Pointer to where to copy frame data from, this gets set when comm_frame_send(frame_t) is called, whith the parameter it gets passed.
- */
-static frame_t* frame_source;
 
 /**
  * This buffer will hold a direct shadow copy of the source frame buffer. The splitted loading of this frame into a smaller radio fifo
@@ -51,8 +48,10 @@ void comm_init(void){
 sys_error_t comm_frame_send(frame_t* frame){
   sys_error_t sys_error;
   if(comm_fifo_tx_fsm_currentState == comm_fifo_tx_fsm_state_idle){
+    if(sys_error_none != comm_frame_make_shadowcopy(frame, &frame_txbuffer_shadow)){
+    sys_error_handler(sys_error_comm);
+    }
     comm_fifo_tx_fsm_currentState = comm_fifo_tx_fsm_state_start;
-    frame_source = frame;
     sys_error = sys_error_none;
   }
   else{
@@ -69,12 +68,8 @@ sys_error_t comm_frame_send(frame_t* frame){
  * to idle state is issued. On first calling of the load state the transmission start command is send to the radio.
  */
 void comm_fifo_tx_fsm(void){
-  static uint8_t first_packet = 0x00;
   switch(comm_fifo_tx_fsm_currentState){
     case comm_fifo_tx_fsm_state_start:{
-      if(sys_error_none != comm_frame_make_shadowcopy(frame_source, &frame_txbuffer_shadow)){
-        sys_error_handler(sys_error_comm);
-      }
       first_packet = 0xff;
       frame_txbuffer_shadow.pointer = frame_txbuffer_shadow.start; //Reset frame position pointer so that fifo loader will begin at start.
       comm_fifo_tx_fsm_currentState = comm_fifo_tx_fsm_state_load;
@@ -82,12 +77,23 @@ void comm_fifo_tx_fsm(void){
     }
 
     case comm_fifo_tx_fsm_state_load:{
-      if(comm_fifo_loader(&frame_txbuffer_shadow) == comm_fifo_loader_finished){
-        comm_fifo_tx_fsm_currentState = comm_fifo_tx_fsm_state_idle;
-      }
-      else{
-        comm_fifo_tx_fsm_currentState = comm_fifo_tx_fsm_state_load;
-      }
+      switch(comm_fifo_loader(&frame_txbuffer_shadow)){
+        case comm_fifo_loader_finished:{
+          comm_fifo_tx_fsm_currentState = comm_fifo_tx_fsm_state_idle;
+          break;
+        }
+        case comm_fifo_loader_busy:{
+          comm_fifo_tx_fsm_currentState = comm_fifo_tx_fsm_state_load;
+          break;
+        }
+        case comm_fifo_loader_error:{
+          comm_fifo_tx_fsm_currentState = comm_fifo_tx_fsm_state_start; //Attempt retrasmission if buffer underflow occurs
+          break;
+        }
+        default:{
+          break;
+        }
+        }
       if(first_packet){
         first_packet = 0x00;
         comm_hal_tx_start();
@@ -113,6 +119,10 @@ void comm_fifo_tx_fsm(void){
 static enum comm_fifo_loader_result comm_fifo_loader(frame_t* frame){
   const uint16_t frame_packet_remaining = frame->end - frame->pointer;
   const uint8_t fifo_emtpy_space = comm_hal_fifo_get_space();
+
+  if((fifo_emtpy_space >= RADIO_FIFO_SIZE) && !first_packet){
+    return comm_fifo_loader_error;
+  }
 
   if(frame_packet_remaining > fifo_emtpy_space){ //Check if there is enough frame left to completly refill the fifo.
     comm_hal_fifo_write(frame->pointer, fifo_emtpy_space);
@@ -152,7 +162,6 @@ sys_error_t comm_frame_make_shadowcopy(frame_t* source, frame_t* destination){
       return sys_error_comm;
     }
     else{
-    //Todo: increment value here with post increment.
       *destination->pointer = *source->pointer;
     }
   }

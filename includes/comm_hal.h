@@ -30,6 +30,7 @@ extern "C" {
 
 /*DEFINES*/
 #define RADIO_IC_TYPE 0x4464
+#define RADIO_FIFO_SIZE 0x40
 
 #define RADIO_FREQUENCY_LIMIT_UPPER 0x78 //0x78 = 120 <=> 120 * 50kHz = 6MHz <=> Max carrier frequency is 406 MHz
 

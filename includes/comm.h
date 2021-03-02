@@ -45,7 +45,7 @@ typedef struct {
 
 /*enumERATORS*/
 enum comm_fifo_tx_fsm_currentState {comm_fifo_tx_fsm_state_start, comm_fifo_tx_fsm_state_load, comm_fifo_tx_fsm_state_idle};
-enum comm_fifo_loader_result {comm_fifo_loader_busy, comm_fifo_loader_finished};
+enum comm_fifo_loader_result {comm_fifo_loader_busy, comm_fifo_loader_finished, comm_fifo_loader_error};
 
 /*PUBLIC PROTOTYPES*/
 void comm_init(void);

@@ -13,6 +13,7 @@
 
 uint32_t frame_flag = 0;
 void fill_data(void);
+uint8_t test2[5];
 
 /**
  * After the startup code finishes it will call this function, here is the entry point for user code exeution.
@@ -29,6 +30,10 @@ void main(void)
   fill_data();
   comm_hal_frequency_set(0x5e);
   comm_hal_datarate_set(4800U);
+
+  //si446x_start_rx(0x5e, 0x00, 0x05, 0x00, 0x00, 0x00);
+  //asm("nop");
+  //si446x_read_rx_fifo(0x05, test2);
 
   while(1){
     if(tick_flag){
