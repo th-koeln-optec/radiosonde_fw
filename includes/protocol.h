@@ -64,6 +64,10 @@ void protocol_frame_send(void);
 void protocol_field_write(const field_t* field, const uint8_t* data);
 void protocol_ecc_engine(RS_t* rs,frame_t* frame);
 
+#ifdef COMM_RX_ENABLED
+  uint16_t protocol_command_get(void);
+#endif
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

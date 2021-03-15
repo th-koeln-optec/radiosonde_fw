@@ -12,8 +12,8 @@
 #include "protocol.h"
 
 uint32_t frame_flag = 0;
+void command_handler(uint16_t rx_data);
 void fill_data(void);
-uint8_t test2[5];
 
 /**
  * After the startup code finishes it will call this function, here is the entry point for user code exeution.
@@ -31,14 +31,20 @@ void main(void)
   comm_hal_frequency_set(0x5e);
   comm_hal_datarate_set(4800U);
 
-  //si446x_start_rx(0x5e, 0x00, 0x05, 0x00, 0x00, 0x00);
-  //asm("nop");
-  //si446x_read_rx_fifo(0x05, test2);
-
   while(1){
+    if(comm_int_handler_pending){
+      comm_int_handler();
+      comm_int_handler_pending = 0x00;
+    }
+    #ifdef COMM_RX_ENABLED
+      if(comm_rx_pending){
+        command_handler(protocol_command_get());
+        comm_rx_pending = 0x00;
+      }
+    #endif
     if(tick_flag){
       tick_flag = 0x00;
-      comm_fifo_tx_fsm();
+      //If comm_int_handler_pending is not set by the interrupt function it must be set here periodically.
       if(frame_flag == 0){
         protocol_frame_send();
         frame_flag = 1000;
@@ -49,6 +55,38 @@ void main(void)
     }
   }
 }
+
+void EXTI0_IRQHandler(void){
+  comm_int_handler_pending = 0xff;
+  EXTI->PR |= EXTI_PR_PR0;
+}
+
+#ifdef COMM_RX_ENABLED
+  enum command_table{nop = 0x00, led_toggle = 0x03, error = 0xff};
+  void command_handler(uint16_t rx_data){
+    uint8_t value = rx_data; //drop high byte
+    switch((rx_data >> 8)){
+      case nop:{
+        asm("nop"); //Erst mal 'ne Runde nichts machen! (For testing purpose)
+      }
+      case led_toggle:{
+        if(GPIO_LED->ODR & GPIO_ODR_ODR13_Msk){
+          GPIO_LED->BSRR |= GPIO_BSRR_BR_LEDRED_Msk;
+        }
+        else{
+          GPIO_LED->BSRR |= GPIO_BSRR_BS_LEDRED_Msk;
+        }
+        break;
+      }
+      case error:{
+        asm("nop");//error
+      }
+      default:{
+        break;
+      }
+    }
+  }
+#endif
 
 void fill_data(void){
   uint8_t status_data[40] = {

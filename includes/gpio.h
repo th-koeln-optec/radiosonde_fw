@@ -53,6 +53,7 @@ void gpio_rcc_init(void);
 void gpio_spi1_init(void);
 void gpio_radio_init(void);
 void gpio_led_init(void);
+void gpio_int_init(void);
 
 #ifdef __cplusplus
 }

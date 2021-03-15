@@ -15,6 +15,7 @@ void gpio_init(void){
   gpio_spi1_init();
   gpio_radio_init();
   gpio_led_init();
+  gpio_int_init();
 }
 
 /**
@@ -62,13 +63,22 @@ void gpio_radio_init(void){
   GPIO_RADIO_SHDN->CRL &= ~(GPIO_CRL_CNF_RADIO_SHDN_Msk);
   GPIO_RADIO_SHDN->CRL |= (GPIO_CRL_CNF_OUT_PP << GPIO_CRL_CNF_RADIO_SHDN_Pos);
   GPIO_RADIO_SHDN->BSRR |= GPIO_BSRR_BS_RADIO_SHDN_Msk; //Radio shutdown pin should be high as initial value.
+  /*nirq*/
+  GPIO_RADIO_NRIQ->CRL &= ~(GPIO_CRL_MODE_RADIO_NRIQ_Msk);
+  GPIO_RADIO_NRIQ->CRL |= (GPIO_CRL_MODE_IN << GPIO_CRL_MODE_RADIO_NRIQ_Pos);
+  GPIO_RADIO_NRIQ->CRL &= ~(GPIO_CRL_CNF_RADIO_NRIQ_Msk);
+  GPIO_RADIO_NRIQ->CRL |= (GPIO_CRL_CNF_IN_FLOAT << GPIO_CRL_CNF_RADIO_NRIQ_Pos);
+  AFIO->EXTICR[0] &= ~(AFIO_EXTICR1_EXTI0_Msk);
+  AFIO->EXTICR[0] |= AFIO_EXTICR1_EXTI0_PB;
 }
 
 /**
  * Sets output direction and mode and initial state for the pins where leds are connected to.
  */
 void gpio_led_init(void){
-  GPIO_LED->BSRR |= GPIO_BSRR_BS_LEDGRN_Msk | GPIO_BSRR_BS_LEDRED_Msk; //Start with leds off
+  //GPIO_LED->BSRR |= GPIO_BSRR_BS_LEDGRN_Msk | GPIO_BSRR_BS_LEDRED_Msk; //Start with leds off
+  GPIO_LED->BSRR |= GPIO_BSRR_BS_LEDGRN_Msk;
+  GPIO_LED->BSRR |= GPIO_BSRR_BR_LEDRED_Msk;
 
   GPIO_LED->CRL &= ~(GPIO_CRL_MODE_LEDGRN_Msk);
   GPIO_LED->CRL |= (GPIO_CRH_MODE_OUT2 << GPIO_CRL_MODE_LEDGRN_Pos);
@@ -79,4 +89,11 @@ void gpio_led_init(void){
   GPIO_LED->CRH |= (GPIO_CRH_MODE_OUT2 << GPIO_CRH_MODE_LEDRED_Pos);
   GPIO_LED->CRH &= ~(GPIO_CRH_CNF_LEDRED_Msk);
   GPIO_LED->CRH |= (GPIO_CRH_CNF_OUT_PP << GPIO_CRH_CNF_LEDRED_Pos);
+}
+
+void gpio_int_init(void){
+/*Radio nirq interrupt*/
+  EXTI->IMR |= EXTI_IMR_MR0;
+  EXTI->FTSR |= EXTI_FTSR_FT0;
+  NVIC_EnableIRQ(EXTI0_IRQn);
 }

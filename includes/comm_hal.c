@@ -27,7 +27,7 @@ void comm_hal_init(void){
   si446x_configuration_init(comm_hal_cfg);
 
   si446x_part_info();
-  if(Si446xCmd.PART_INFO.PART != RADIO_IC_TYPE){
+  if(Si446xCmd.PART_INFO.PART != COMM_HAL_RADIO_IC_TYPE){
     sys_error_handler(sys_error_radio);
   }
 }
@@ -36,7 +36,7 @@ void comm_hal_init(void){
  * This functions sends the necessary command to the radio in order to start frame transmission.
  */
 void comm_hal_tx_start(void){
-  si446x_start_tx(comm_hal_frequency, 0x00, COMM_FRAME_BUFFER_SIZE);
+  si446x_start_tx(comm_hal_frequency, 0x00, COMM_FRAME_TX_BUFFER_SIZE);
 }
 
 /**
@@ -102,8 +102,33 @@ void comm_hal_datarate_set(uint16_t datarate){
  * @param frequency This integer number will icrement the carrier frequency in 50kHz steps beginning at 400 MHz. f_c = 400MHz + (50kHz * frequency)
  */
 void comm_hal_frequency_set(uint8_t frequency){
-  if(frequency > RADIO_FREQUENCY_LIMIT_UPPER){
-    frequency = RADIO_FREQUENCY_LIMIT_UPPER;
+  if(frequency > COMM_HAL_RADIO_FREQUENCY_LIMIT_UPPER){
+    frequency = COMM_HAL_RADIO_FREQUENCY_LIMIT_UPPER;
   }
   comm_hal_frequency = frequency;
+}
+
+/**
+ * This functions reads multiple bytes from the radio fifo memory.
+ * @param buffer Pointer to where read data will be written to.
+ * @param buffer_length How many bytes will be read.
+ */
+void comm_hal_fifo_read(uint8_t* buffer, uint8_t buffer_length){
+  si446x_read_rx_fifo(buffer_length, buffer);
+}
+
+/**
+ * This functions sends the necessary command to the radio in order to start receive mode.
+ */
+void comm_hal_rx_start(void){
+  si446x_start_rx(comm_hal_frequency, 0x00, COMM_FRAME_RX_BUFFER_SIZE, 0x00, 0x08, 0x08);
+}
+
+/**
+ * This function returns the packet handler pending interrupt bits.
+ * @return This is the PH_PEND byte of GET_INT_STATUS.
+ */
+uint8_t comm_hal_int_get_ph(void){
+  si446x_get_int_status_fast_clear_read();
+  return Si446xCmd.GET_INT_STATUS.PH_PEND;
 }

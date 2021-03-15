@@ -338,3 +338,31 @@ void protocol_ecc_engine(RS_t* rs,frame_t* frame){
     rs_encode(rs, message, &frame->buffer[offset]);
   }
 }
+
+#ifdef COMM_RX_ENABLED
+/**
+ * Data de-whitening mask for rx packet, this is the same as for tx, but since mask_t struct isnt used
+ * and wrap arounds are unnessecary this reduced version is more efficient.
+ */
+uint8_t command_xor_mask[4] = {0xb1, 0x49, 0x08, 0x98};
+
+/**
+ * This function takes a packet from comm_rx_buffer and performs data de-whitening on it and the checks
+ * if the crc sum matches.
+ * @return Received two byte packet is returned if crc sum matches, if not 0xffff is returned.
+ */
+uint16_t protocol_command_get(void){
+  uint16_t rx_crc = 0;
+
+  for(uint8_t i = 0; i < 4; i++){
+    comm_rx_buffer[i] ^= command_xor_mask[i];
+  }
+  rx_crc = (comm_rx_buffer[3] << 8) | comm_rx_buffer[2];
+  if(rx_crc == comm_crc16_engine(comm_rx_buffer, 0x02, protocol_crc)){
+    return ((comm_rx_buffer[0] <<8) | comm_rx_buffer[1]);
+  }
+  else{
+    return 0xffff;
+  }
+}
+#endif

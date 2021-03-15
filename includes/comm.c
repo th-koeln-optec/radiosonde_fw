@@ -11,7 +11,16 @@
 
 #include "comm.h"
 
-static uint8_t first_packet = 0x00;
+/**
+ * This flag will be set by the ISR if the radio issues an interrupt on the nIRQ pin.
+ * Application code has to call comm_int_handler hereon.
+ */
+uint8_t comm_int_handler_pending = 0;
+
+/**
+ * This flag is set upon start state of the fsm, after first fifo loading it will be checked and when set comm_hal_tx_start will be called.
+ */
+static uint8_t first_packet = 0;
 
 /**
  * Finite state machine's current state memory variable.
@@ -52,6 +61,7 @@ sys_error_t comm_frame_send(frame_t* frame){
     sys_error_handler(sys_error_comm);
     }
     comm_fifo_tx_fsm_currentState = comm_fifo_tx_fsm_state_start;
+    comm_fifo_tx_fsm();
     sys_error = sys_error_none;
   }
   else{
@@ -73,7 +83,6 @@ void comm_fifo_tx_fsm(void){
       first_packet = 0xff;
       frame_txbuffer_shadow.pointer = frame_txbuffer_shadow.start; //Reset frame position pointer so that fifo loader will begin at start.
       comm_fifo_tx_fsm_currentState = comm_fifo_tx_fsm_state_load;
-      break;
     }
 
     case comm_fifo_tx_fsm_state_load:{
@@ -87,7 +96,7 @@ void comm_fifo_tx_fsm(void){
           break;
         }
         case comm_fifo_loader_error:{
-          comm_fifo_tx_fsm_currentState = comm_fifo_tx_fsm_state_start; //Attempt retrasmission if buffer underflow occurs
+          comm_fifo_tx_fsm_currentState = comm_fifo_tx_fsm_state_start; //Attempt retransmission if buffer underflow occurs
           break;
         }
         default:{
@@ -95,7 +104,7 @@ void comm_fifo_tx_fsm(void){
         }
         }
       if(first_packet){
-        first_packet = 0x00;
+        first_packet = 0;
         comm_hal_tx_start();
       }
       break;
@@ -120,7 +129,7 @@ static enum comm_fifo_loader_result comm_fifo_loader(frame_t* frame){
   const uint16_t frame_packet_remaining = frame->end - frame->pointer;
   const uint8_t fifo_emtpy_space = comm_hal_fifo_get_space();
 
-  if((fifo_emtpy_space >= RADIO_FIFO_SIZE) && !first_packet){
+  if((fifo_emtpy_space >= COMM_HAL_RADIO_FIFO_SIZE) && !first_packet){ //Check if fifo underflow occured, this is when fifo is completely empty, but not on first loading.
     return comm_fifo_loader_error;
   }
 
@@ -208,3 +217,47 @@ void comm_xor_engine(frame_t* frame, xor_mask_t* mask){
     *frame->pointer ^= *mask->pointer;
   }
 }
+
+/**
+ * This function has to be called when the radio ic issues an interrupt. It determines by which internal source the interrupt was triggerd.
+ * Based on this various functions can be called.
+ */
+void comm_int_handler(void){
+  uint8_t ph_int_status = 0;
+  ph_int_status = comm_hal_int_get_ph();
+  if(ph_int_status & COMM_HAL_INT_PH_TX_FIFO_ALMOST_EMPTY_Msk){
+    //Call the fifo management engine when the radio issues a almost emtpy fifo.
+    comm_fifo_tx_fsm();
+  }
+  #ifdef COMM_RX_ENABLED
+  if(ph_int_status & COMM_HAL_INT_PH_PACKET_SENT_Msk){
+    //Start rx mode when radio finished sending a packet.
+    comm_hal_rx_start();
+  }
+  if(ph_int_status & COMM_HAL_INT_PH_PACKET_RX_Msk){
+    //Read received data out, when radio issues a vaild received packet.
+    comm_fifo_getter();
+  }
+  #endif
+}
+
+#ifdef COMM_RX_ENABLED
+/**
+ * This flag will be set if a packet was received and fifo was read out.
+ */
+uint8_t comm_rx_pending = 0;
+
+/**
+ * Received data will be written here.
+ */
+uint8_t comm_rx_buffer[COMM_FRAME_RX_BUFFER_SIZE] = {0};
+
+/**
+ * If a valid packet is received by the radio the interrupt handler has to call this function.
+ * The FIFO will be read out and the data will be written in comm_rx_buffer.
+ */
+void comm_fifo_getter(void){
+  comm_hal_fifo_read(comm_rx_buffer, COMM_FRAME_RX_BUFFER_SIZE);
+  comm_rx_pending = 0xff;
+}
+#endif
