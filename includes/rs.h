@@ -44,7 +44,6 @@ typedef struct{
 extern RS_t RS256;
 
 /*PUBLIC PROTOTYPES*/
-void test(GF_t* gf);
 static int16_t gf_degree(uint32_t p);
 static int16_t poly_degree(uint8_t poly[]);
 static uint8_t gf_multiply_calculate(GF_t *gf, uint8_t a, uint8_t b);

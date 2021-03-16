@@ -8,22 +8,11 @@
 
 #include "rs.h"
 
-void test(GF_t* gf){
-  uint8_t test_a[MAX_DEG+1] = {0x01, 0x02, 0x03, 0x05};
-  uint8_t test_b[MAX_DEG+1] = {0x00, 0x02, 0x04, 0x06, 0x08};
-  uint8_t test_ab[MAX_DEG+1] = {0};
-  uint8_t d[MAX_DEG+1] = {0};
-  //poly_multiply(gf, test_a, test_b, test_ab);
-  poly_divide(gf, test_a, test_b, d, test_ab);
-  asm ("nop");
-}
-
 /**
  * This function determines the degree of a galois element.
  * @pram p This is the galois elemt whose degree will be determined.
  * @return If an emtpy galois element is passed, -1 will be returned, else the degree of the galois element is returned.
  */
- //todo: somewhere in here might be a problem, since execution is sometimes awfully slow, please investigate Watson!
 static int16_t gf_degree(uint32_t p){
   uint8_t degree = 31; //The 31st bit of p is its most significant bit.
 

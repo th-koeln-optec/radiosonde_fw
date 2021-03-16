@@ -49,6 +49,7 @@ void comm_hal_frequency_set(uint8_t frequency);
 void comm_hal_fifo_read(uint8_t* buffer, uint8_t buffer_length);
 void comm_hal_rx_start(void);
 uint8_t comm_hal_int_get_ph(void);
+void comm_hal_hdrmode(uint8_t onoff);
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

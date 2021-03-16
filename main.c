@@ -31,6 +31,8 @@ void main(void)
   comm_hal_frequency_set(0x5e);
   comm_hal_datarate_set(4800U);
 
+  //comm_hal_hdrmode(0xff);
+
   while(1){
     if(comm_int_handler_pending){
       comm_int_handler();

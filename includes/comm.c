@@ -92,6 +92,7 @@ void comm_fifo_tx_fsm(void){
           break;
         }
         case comm_fifo_loader_busy:{
+          si446x_get_int_status(0xff, 0xff, 0xff);
           comm_fifo_tx_fsm_currentState = comm_fifo_tx_fsm_state_load;
           break;
         }
