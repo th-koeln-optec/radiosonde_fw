@@ -49,7 +49,7 @@ void main(void)
       //If comm_int_handler_pending is not set by the interrupt function it must be set here periodically.
       if(frame_flag == 0){
         protocol_frame_send();
-        frame_flag = 33;
+        frame_flag = 1000;
       }
       else{
         frame_flag--;
