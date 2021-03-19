@@ -280,7 +280,7 @@ int8_t rs_init(RS_t* rs, GF_t* gf){
     //g(X)=(X-alpha^b)...(X-alpha^(b+2t-1)), b=0
     rs->g[0] = 0x01;
     Xalpha[1] = 0x01; // X
-    for (uint16_t i = 0; i < 2*rs->t; i++) {
+    for (uint16_t i = 0; i < (rs->n - rs->k); i++) {
         Xalpha[0] = gf->exp_a[(rs->b+i) % (gf->order-1)];  // Xalp[0..1]: X - alpha^(b+i)
         poly_multiply(gf, rs->g, Xalpha, rs->g);
     }
@@ -291,8 +291,8 @@ int8_t rs_init(RS_t* rs, GF_t* gf){
 /**
  * This function performs the reed solomon encoding.
  * @param rs Points to a rs_t struct which holds all the necessary parameters that characterize the reed-solomon properties.
- * @param source Pointer to a 'rs->K' long array which holds the source data that is to be encoded, the first 'rs->R' array elements must be emtpy space.
- * @param destination Pointer to an 'rs->r' long array that holds emtpy space for parity data to be written to.
+ * @param source Pointer to a 'rs->k' long array which holds the source data that is to be encoded, the first '(rs->n - rs->k)' array elements must be emtpy space.
+ * @param destination Pointer to an '(rs->n - rs->k)' long array that holds emtpy space for parity data to be written to.
  */
 void rs_encode(RS_t* rs, uint8_t source[], uint8_t destination[]){
     GF_t *gf = rs->gf;
@@ -301,13 +301,13 @@ void rs_encode(RS_t* rs, uint8_t source[], uint8_t destination[]){
     uint8_t parity[MAX_DEG+1] = {0};
     uint8_t quotient[MAX_DEG+1] = {0};
 
-    //for(uint16_t j = RS->R; j < RS->N; j++){
+    //for(uint16_t j = (rs->n - rs->k); j < rs->n; j++){
     //  _source[j] = source[j];
     //}
     //message(x)/generator(x)=quotient(x)+remainder(x) <=> _source[]/rs->g[]=quotient[]+parity[]
     poly_divide(gf, source, rs->g, quotient, parity);
 
-    for (uint16_t j = 0; j < rs->R; j++){
+    for (uint16_t j = 0; j < (rs->n - rs->k); j++){
       destination[j] = parity[j];
     }
 }

@@ -123,10 +123,8 @@ GF_t GF256RS = {
 };
 
 RS_t RS256 = {
-  .N = 255,
-  .t = 12,
-  .R = 24,
-  .K = 231,
+  .n = 255,
+  .k = 231,
   .b = 0,
   .p = 1,
   .ip = 1,
@@ -326,15 +324,15 @@ void protocol_ecc_engine(RS_t* rs,frame_t* frame){
   uint8_t message[RS_ORDER - 1] = {0};
   uint16_t offset = 0;
   for(uint16_t j = 0; j <= 1; j++){
-    for(uint16_t i = 0; i < rs->K; i++){
+    for(uint16_t i = 0; i < rs->k; i++){
       if(&frame->buffer[protocol_f_frametype.offset + 2*i + j] < frame->end){ //Prevent pointer overflow, check if frame end is reached.
-        message[i + rs->R] = frame->buffer[protocol_f_frametype.offset + 2*i + j];
+        message[i + (rs->n - rs->k)] = frame->buffer[protocol_f_frametype.offset + 2*i + j];
       }
       else{
-        message[i + rs->R] = 0; //Perform zero padding on remaining array space.
+        message[i + (rs->n - rs->k)] = 0; //Perform zero padding on remaining array space.
       }
     }
-    offset = j ? (protocol_f_ecc.offset + rs->R) : protocol_f_ecc.offset; //Shift parity data write destination by parity data size, for the second run.
+    offset = j ? (protocol_f_ecc.offset + (rs->n - rs->k)) : protocol_f_ecc.offset; //Shift parity data write destination by parity data size, for the second run.
     rs_encode(rs, message, &frame->buffer[offset]);
   }
 }

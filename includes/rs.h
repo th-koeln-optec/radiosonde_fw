@@ -30,14 +30,13 @@ typedef struct{
 }GF_t;
 
 typedef struct{
-  uint8_t N; //
-  uint8_t t;
-  uint8_t R;  // RS: R=2t, BCH: R<=mt
-  uint8_t K;  // K=N-R
+  uint8_t n; //Order of forward error correction code, i.e. number of message byte (data+parity bytes)
+  uint8_t k; //Number of data bytes
   uint8_t b;
-  uint8_t p; uint8_t ip; // p*ip = 1 mod N
-  uint8_t g[MAX_DEG+1]; // MAX_DEG+1 = 255
-  GF_t* gf;
+  uint8_t p; 
+  uint8_t ip; // p*ip = 1 mod N
+  uint8_t g[MAX_DEG+1]; //Array holds the generator polynomial
+  GF_t* gf; //Pointer to the galois field definition
 }RS_t;
 
 /*GLOBAL VARIABLES*/
