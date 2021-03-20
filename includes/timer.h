@@ -16,7 +16,7 @@ extern "C" {
 #include <stdint.h>
 
 /*GLOBAL VARIABLES*/
-extern uint8_t tick_flag;
+extern uint8_t send_flag;
 /*enumERATORS*/
 
 /*typedefINITIONS*/

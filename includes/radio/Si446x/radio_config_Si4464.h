@@ -489,6 +489,8 @@
 */
 #define RF_PA_MODE_4 0x11, 0x22, 0x04, 0x00, 0x08, 0x01, 0x00, 0x3D
 
+
+
 /*
 // Set properties:           RF_SYNTH_PFDCP_CPFF_7
 // Number of properties:     7

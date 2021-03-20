@@ -11,7 +11,6 @@
 #include "timer.h"
 #include "protocol.h"
 
-uint32_t frame_flag = 0;
 void command_handler(uint16_t rx_data);
 void fill_data(void);
 
@@ -31,7 +30,7 @@ void main(void)
   comm_hal_frequency_set(0x5e);
   comm_hal_datarate_set(4800U);
 
-  //comm_hal_hdrmode(0xff);
+  comm_hal_hdrmode(0x00);
 
   while(1){
     if(comm_int_handler_pending){
@@ -44,16 +43,9 @@ void main(void)
         comm_rx_pending = 0x00;
       }
     #endif
-    if(tick_flag){
-      tick_flag = 0x00;
-      //If comm_int_handler_pending is not set by the interrupt function it must be set here periodically.
-      if(frame_flag == 0){
-        protocol_frame_send();
-        frame_flag = 1000;
-      }
-      else{
-        frame_flag--;
-      }
+    if(send_flag){
+      protocol_frame_send();
+      send_flag = 0;
     }
   }
 }
